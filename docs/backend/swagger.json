@@ -1469,6 +1469,12 @@
                             "$ref": "#/definitions/middleware.APIError"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
