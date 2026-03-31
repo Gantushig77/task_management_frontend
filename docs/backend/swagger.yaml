@@ -1,0 +1,1140 @@
+basePath: /api
+definitions:
+  authhandler.authResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: string
+    type: object
+  authhandler.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  authhandler.messageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authhandler.registerRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 2
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  authhandler.resetPasswordConfirmRequest:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - new_password
+    - token
+    type: object
+  authhandler.resetPasswordRequestRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  boardshandler.boardResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      position:
+        type: integer
+      workspace_id:
+        type: string
+    type: object
+  boardshandler.createBoardRequest:
+    properties:
+      name:
+        minLength: 2
+        type: string
+      position:
+        type: integer
+      workspace_id:
+        type: string
+    required:
+    - name
+    - workspace_id
+    type: object
+  boardshandler.listBoardsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/boardshandler.boardResponse'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
+  boardshandler.updateBoardRequest:
+    properties:
+      name:
+        minLength: 2
+        type: string
+      position:
+        type: integer
+    required:
+    - name
+    type: object
+  commentshandler.commentResponse:
+    properties:
+      body:
+        type: string
+      id:
+        type: string
+      task_id:
+        type: string
+    type: object
+  commentshandler.createCommentRequest:
+    properties:
+      body:
+        minLength: 1
+        type: string
+    required:
+    - body
+    type: object
+  commentshandler.listCommentsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/commentshandler.commentResponse'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
+  commentshandler.updateCommentRequest:
+    properties:
+      body:
+        minLength: 1
+        type: string
+    required:
+    - body
+    type: object
+  middleware.APIError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  taskshandler.createTaskRequest:
+    properties:
+      assigned_to_user_id:
+        type: string
+      board_id:
+        type: string
+      description:
+        type: string
+      due_at:
+        type: string
+      priority:
+        type: integer
+      status:
+        type: string
+      title:
+        minLength: 2
+        type: string
+    required:
+    - board_id
+    - title
+    type: object
+  taskshandler.listTasksResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/taskshandler.taskResponse'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
+  taskshandler.taskDetailResponse:
+    properties:
+      assigned_to_user_id:
+        type: string
+      board_id:
+        type: string
+      created_at:
+        type: string
+      created_by_user_id:
+        type: string
+      description:
+        type: string
+      due_at:
+        type: string
+      id:
+        type: string
+      priority:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  taskshandler.taskResponse:
+    properties:
+      board_id:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+    type: object
+  taskshandler.updateTaskRequest:
+    properties:
+      assigned_to_user_id:
+        type: string
+      description:
+        type: string
+      due_at:
+        type: string
+      priority:
+        type: integer
+      status:
+        type: string
+      title:
+        minLength: 2
+        type: string
+    required:
+    - title
+    type: object
+  usershandler.meResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      email_verified_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  workspaceshandler.createWorkspaceRequest:
+    properties:
+      name:
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  workspaceshandler.listWorkspacesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/workspaceshandler.workspaceResponse'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
+  workspaceshandler.updateWorkspaceRequest:
+    properties:
+      name:
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  workspaceshandler.workspaceResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Task management backend (Fiber + Postgres + sqlc).
+  title: Task Management API
+  version: 0.1.0
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authhandler.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authhandler.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      summary: Login
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Register request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authhandler.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/authhandler.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      summary: Register
+      tags:
+      - Auth
+  /auth/reset-password/confirm:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Confirm password reset
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authhandler.resetPasswordConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authhandler.messageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      summary: Confirm password reset
+      tags:
+      - Auth
+  /auth/reset-password/request:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request password reset
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authhandler.resetPasswordRequestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authhandler.messageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      summary: Request password reset
+      tags:
+      - Auth
+  /auth/verify-email:
+    get:
+      parameters:
+      - description: Verification token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      summary: Verify email
+      tags:
+      - Auth
+  /boards:
+    get:
+      parameters:
+      - description: 'Workspace ID (omit for admin: list all boards)'
+        in: query
+        name: workspace_id
+        type: string
+      - default: 20
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/boardshandler.listBoardsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: List boards
+      tags:
+      - Board
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Board
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/boardshandler.createBoardRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/boardshandler.boardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Create board
+      tags:
+      - Board
+  /boards/{id}:
+    delete:
+      parameters:
+      - description: Board ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Delete board
+      tags:
+      - Board
+    get:
+      parameters:
+      - description: Board ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/boardshandler.boardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Get board
+      tags:
+      - Board
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Board ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Board
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/boardshandler.updateBoardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/boardshandler.boardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Update board
+      tags:
+      - Board
+  /me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usershandler.meResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - Users
+  /tasks:
+    get:
+      parameters:
+      - description: 'Board ID (omit for admin: list all tasks)'
+        in: query
+        name: board_id
+        type: string
+      - default: 20
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/taskshandler.listTasksResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: List tasks
+      tags:
+      - Task
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Task
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/taskshandler.createTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/taskshandler.taskDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Create task
+      tags:
+      - Task
+  /tasks/{id}:
+    delete:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Delete task
+      tags:
+      - Task
+    get:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/taskshandler.taskDetailResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Get task
+      tags:
+      - Task
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Task
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/taskshandler.updateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/taskshandler.taskDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Update task
+      tags:
+      - Task
+  /tasks/{id}/comments:
+    get:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 20
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commentshandler.listCommentsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: List comments
+      tags:
+      - Comment
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/commentshandler.createCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/commentshandler.commentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Create comment
+      tags:
+      - Comment
+  /tasks/{id}/comments/{commentId}:
+    delete:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Delete comment
+      tags:
+      - Comment
+    get:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commentshandler.commentResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Get comment
+      tags:
+      - Comment
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: string
+      - description: Comment
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/commentshandler.updateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commentshandler.commentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Update comment
+      tags:
+      - Comment
+  /workspaces:
+    get:
+      parameters:
+      - default: 20
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/workspaceshandler.listWorkspacesResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: List workspaces
+      tags:
+      - Workspace
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Workspace
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/workspaceshandler.createWorkspaceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/workspaceshandler.workspaceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Create workspace
+      tags:
+      - Workspace
+  /workspaces/{id}:
+    delete:
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Delete workspace
+      tags:
+      - Workspace
+    get:
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/workspaceshandler.workspaceResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Get workspace
+      tags:
+      - Workspace
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Workspace
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/workspaceshandler.updateWorkspaceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/workspaceshandler.workspaceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.APIError'
+      security:
+      - BearerAuth: []
+      summary: Update workspace
+      tags:
+      - Workspace
+securityDefinitions:
+  BearerAuth:
+    description: 'Use: "Bearer <token>"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
