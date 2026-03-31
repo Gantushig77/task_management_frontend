@@ -5,12 +5,19 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { isAdmin } from '@/lib/auth/roles';
 import { RequireAuth } from '@/lib/auth/route-guards';
+import { DEFAULT_PAGE_LIMIT, useInfiniteWorkspaces } from '@/lib/api/hooks';
+import { CreateWorkspaceButton } from '@/ui/workspaces/create-workspace-button';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { session, logout } = useAuth();
   const displayName =
     session?.user?.username ?? session?.user?.name ?? session?.user?.email ?? 'User';
+  const workspacesQuery = useInfiniteWorkspaces(DEFAULT_PAGE_LIMIT);
+  const workspaces =
+    workspacesQuery.data?.pages.flatMap(
+      (p: { items: { id: string; name: string }[] }) => p.items,
+    ) ?? [];
 
   return (
     <RequireAuth>
@@ -41,6 +48,51 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               Demo board
             </Link>
           </nav>
+
+          <div className='mt-5'>
+            <div className='flex items-center justify-between px-3'>
+              <div className='text-xs font-semibold text-zinc-500 dark:text-zinc-400'>
+                Workspaces
+              </div>
+              <CreateWorkspaceButton
+                label='+'
+                className='h-7 w-7 rounded-lg border border-black/10 bg-white text-xs font-semibold hover:bg-black/4 dark:border-white/10 dark:bg-zinc-950 dark:hover:bg-white/6'
+              />
+            </div>
+            <div className='tm-scrollbar mt-2 max-h-[45vh] overflow-auto rounded-xl border border-black/10 dark:border-white/10'>
+              <div className='flex flex-col p-2'>
+                {workspaces.map((ws: { id: string; name: string }) => (
+                  <Link
+                    key={ws.id}
+                    href={`/app/workspaces/${ws.id}`}
+                    className='rounded-lg px-2 py-2 text-sm hover:bg-black/4 dark:hover:bg-white/6'
+                  >
+                    {ws.name}
+                  </Link>
+                ))}
+                {!workspacesQuery.isLoading && workspaces.length === 0 ? (
+                  <div className='px-2 py-2 text-xs text-zinc-600 dark:text-zinc-400'>
+                    No workspaces yet.
+                  </div>
+                ) : null}
+                {workspacesQuery.isLoading ? (
+                  <div className='px-2 py-2 text-xs text-zinc-600 dark:text-zinc-400'>
+                    Loading…
+                  </div>
+                ) : null}
+                {workspacesQuery.hasNextPage ? (
+                  <button
+                    type='button'
+                    className='mt-1 rounded-lg px-2 py-2 text-left text-xs font-medium text-zinc-700 hover:bg-black/4 dark:text-zinc-300 dark:hover:bg-white/6'
+                    onClick={() => workspacesQuery.fetchNextPage()}
+                    disabled={workspacesQuery.isFetchingNextPage}
+                  >
+                    {workspacesQuery.isFetchingNextPage ? 'Loading…' : 'Load more'}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
 
           <div className='mt-auto pt-4'>
             <button

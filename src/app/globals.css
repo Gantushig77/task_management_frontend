@@ -25,6 +25,34 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Default (page-level) scrollbar styling */
+html {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: color-mix(in oklab, var(--foreground) 35%, transparent) transparent;
+}
+
+html::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--foreground) 20%, transparent);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--foreground) 35%, transparent);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
 .tm-scrollbar {
   scrollbar-width: thin; /* Firefox */
   scrollbar-color: color-mix(in oklab, var(--foreground) 35%, transparent) transparent;

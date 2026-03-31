@@ -10,6 +10,11 @@ export type KanbanTask = {
   title: string;
   description?: string;
   status: TaskStatus;
+  dueAt?: string | null;
+  assignee?: {
+    name: string;
+    email: string;
+  } | null;
 };
 
 export const KANBAN_COLUMNS: KanbanColumn[] = [

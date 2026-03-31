@@ -111,12 +111,41 @@
             }
         },
         "/auth/reset-password/confirm": {
+            "get": {
+                "description": "Returns an HTML page with a form to set a new password, or an HTML error message if the token is missing or invalid.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Password reset form (from email link)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Opaque reset token from the email link",
+                        "name": "token",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "text/html — form page or error page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "post": {
+                "description": "Accepts JSON (`application/json`) for API clients, or `application/x-www-form-urlencoded` from the HTML form in the email flow. On success, returns JSON for JSON requests and HTML for form requests. Errors may be JSON or HTML accordingly.",
                 "consumes": [
-                    "application/json"
+                    "application/json",
+                    "application/x-www-form-urlencoded"
                 ],
                 "produces": [
-                    "application/json"
+                    "application/json",
+                    "text/html"
                 ],
                 "tags": [
                     "Auth"
@@ -124,7 +153,7 @@
                 "summary": "Confirm password reset",
                 "parameters": [
                     {
-                        "description": "Confirm password reset",
+                        "description": "token + new_password",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -135,7 +164,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "JSON body when the client sends JSON. For `application/x-www-form-urlencoded` (browser form from the email), response is `text/html` with a success page instead.",
                         "schema": {
                             "$ref": "#/definitions/authhandler.messageResponse"
                         }
@@ -488,6 +517,64 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "List all comments (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commentshandler.listCommentsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/middleware.APIError"
                         }
@@ -1327,6 +1414,146 @@
                     }
                 }
             }
+        },
+        "/workspaces/{id}/invite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Workspace"
+                ],
+                "summary": "Invite user to workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Invite",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/workspaceshandler.inviteWorkspaceMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/workspaceshandler.workspaceMemberResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Workspace"
+                ],
+                "summary": "List workspace members",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/workspaceshandler.listWorkspaceMembersResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.APIError"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1486,6 +1713,9 @@
         "commentshandler.commentResponse": {
             "type": "object",
             "properties": {
+                "author": {
+                    "$ref": "#/definitions/commentshandler.commentUserResponse"
+                },
                 "body": {
                     "type": "string"
                 },
@@ -1493,6 +1723,20 @@
                     "type": "string"
                 },
                 "task_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commentshandler.commentUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -1609,6 +1853,9 @@
                 "assigned_to_user_id": {
                     "type": "string"
                 },
+                "assignee": {
+                    "$ref": "#/definitions/taskshandler.userSummary"
+                },
                 "board_id": {
                     "type": "string"
                 },
@@ -1644,6 +1891,9 @@
         "taskshandler.taskResponse": {
             "type": "object",
             "properties": {
+                "assignee": {
+                    "$ref": "#/definitions/taskshandler.userSummary"
+                },
                 "board_id": {
                     "type": "string"
                 },
@@ -1679,6 +1929,20 @@
                 "title": {
                     "type": "string",
                     "minLength": 2
+                }
+            }
+        },
+        "taskshandler.userSummary": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -1720,6 +1984,44 @@
                 }
             }
         },
+        "workspaceshandler.inviteWorkspaceMemberRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "member",
+                        "owner"
+                    ]
+                }
+            }
+        },
+        "workspaceshandler.listWorkspaceMembersResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/workspaceshandler.workspaceMemberResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "workspaceshandler.listWorkspacesResponse": {
             "type": "object",
             "properties": {
@@ -1749,6 +2051,40 @@
                 "name": {
                     "type": "string",
                     "minLength": 2
+                }
+            }
+        },
+        "workspaceshandler.workspaceMemberResponse": {
+            "type": "object",
+            "properties": {
+                "role": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/workspaceshandler.workspaceMemberUserResponse"
+                },
+                "workspace_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "workspaceshandler.workspaceMemberUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "email_verified_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
                 }
             }
         },

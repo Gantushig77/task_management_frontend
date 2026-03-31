@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { HttpError } from "@/lib/api/client";
 import { ApiClient } from "@/lib/api/client";
 import { createApi } from "@/lib/api/endpoints";
 import type { AuthSession } from "@/lib/api/types";
@@ -34,6 +35,14 @@ function normalizeAuthResponseToSession(input: AuthSession, fallbackUser?: AuthS
       refreshToken: input.tokens.refreshToken,
     },
   };
+}
+
+function shouldFallbackToMock(err: unknown): boolean {
+  // Only use mock fallback when backend is unreachable (network error),
+  // not when backend responded with a real HTTP error (e.g. 409 conflict).
+  if (!isMockAuthEnabled()) return false;
+  if (err instanceof HttpError) return false;
+  return true;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -110,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }),
           );
         } catch (err) {
-          if (!isMockAuthEnabled()) throw err;
+          if (!shouldFallbackToMock(err)) throw err;
           const next = mockLogin(email, password);
           setAndPersist(next);
         }
@@ -135,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }),
           );
         } catch (err) {
-          if (!isMockAuthEnabled()) throw err;
+          if (!shouldFallbackToMock(err)) throw err;
           // Password is intentionally ignored in mock mode.
           const next = mockRegister(name, email);
           setAndPersist(next);
@@ -175,9 +184,14 @@ export function useAuth(): AuthState {
   return ctx;
 }
 
-export function createAuthedApi(session: AuthSession | null) {
+export function createAuthedApi(
+  session: AuthSession | null,
+  opts?: { onUnauthorized?: (err: HttpError) => void; onTooManyRequests?: (err: HttpError) => void },
+) {
   const client = new ApiClient({
     getAuthHeader: () => authHeaderFromSession(session),
+    onUnauthorized: opts?.onUnauthorized,
+    onTooManyRequests: opts?.onTooManyRequests,
   });
   return createApi(client);
 }

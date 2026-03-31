@@ -18,6 +18,8 @@ export class HttpError extends Error {
 export type ApiClientOptions = {
   baseUrl?: string;
   getAuthHeader?: AuthHeaderProvider;
+  onUnauthorized?: (err: HttpError) => void;
+  onTooManyRequests?: (err: HttpError) => void;
 };
 
 async function parseJsonSafely(res: Response): Promise<unknown | null> {
@@ -33,10 +35,14 @@ async function parseJsonSafely(res: Response): Promise<unknown | null> {
 export class ApiClient {
   private baseUrl: string;
   private getAuthHeader?: AuthHeaderProvider;
+  private onUnauthorized?: (err: HttpError) => void;
+  private onTooManyRequests?: (err: HttpError) => void;
 
   constructor(opts: ApiClientOptions = {}) {
     this.baseUrl = (opts.baseUrl ?? getApiBaseUrl()).replace(/\/+$/, "");
     this.getAuthHeader = opts.getAuthHeader;
+    this.onUnauthorized = opts.onUnauthorized;
+    this.onTooManyRequests = opts.onTooManyRequests;
   }
 
   async request<T>(
@@ -73,7 +79,10 @@ export class ApiClient {
           "Request failed",
         details: payload ?? undefined,
       };
-      throw new HttpError(apiErr.message, apiErr.status, apiErr.details);
+      const err = new HttpError(apiErr.message, apiErr.status, apiErr.details);
+      if (err.status === 401) this.onUnauthorized?.(err);
+      if (err.status === 429) this.onTooManyRequests?.(err);
+      throw err;
     }
 
     const payload = await parseJsonSafely(res);
